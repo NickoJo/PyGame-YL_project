@@ -128,5 +128,95 @@ class Score(object):
 
 
 class App(object):
-    pass
+    def __init__(self):
+        pygame.init()
+        self.displaySurf, self.displayRect = self.makeScreen()
+        self.mousex = 0
+        self.blocks = self.createBlocks()
+        self.paddle = self.createPaddle()
+        self.ball = self.createBall()
+        self.score = Score()
 
+        self.allSprites = pygame.sprite.Group(self.blocks, self.paddle, self.ball)
+
+    def updateScore(self):
+        self.score.score = self.ball.score
+        self.score.render = self.score.font.render('Score: ' + str(self.score.score), True, white, black)
+        self.score.rect = self.score.render.get_rect()
+        self.score.rect.x = 0
+        self.score.rect.bottom = height
+
+    def makeScreen(self):
+        pygame.display.set_caption('Arkanoid')
+        displaySurf = pygame.display.set_mode((width, height))
+        displayRect = displaySurf.get_rect()
+        displaySurf.fill(background)
+        displaySurf.convert()
+
+        return displaySurf, displayRect
+
+    def createBall(self):
+        ball = Ball(self.displaySurf)
+        ball.rect.centerx = self.paddle.rect.centerx
+        ball.rect.bottom = self.paddle.rect.top
+
+        return ball
+
+    def createPaddle(self):
+        paddle = Paddle()
+        paddle.rect.centerx = self.displayRect.centerx
+        paddle.rect.bottom = self.displayRect.bottom
+
+        return paddle
+
+    def createBlocks(self):
+        blocks = pygame.sprite.Group()
+
+        for row in range(arrayheight):
+            for i in range(arraywidth):
+                block = Block()
+                block.rect.x = i * (blockwidth + blockgap)
+                block.rect.y = row * (blockheight + blockgap)
+                block.color = self.setBlockColor(block, row, i)
+                block.image.fill(block.color)
+                blocks.add(block)
+
+        return blocks
+
+    def setBlockColor(self, block, row, column):
+        if column == 0 or column % 2 == 0:
+            return green
+        else:
+            return blue
+
+    def checkInput(self):
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                self.terminate()
+
+            if event.type == MOUSEMOTION:
+                # We only need the x value of a mousemotion, so we grab
+                # only the first value of the event.pos tuple
+                self.mousex = event.pos[0]
+
+            elif event.type == KEYUP:
+                if event.key == K_SPACE:
+                    self.ball.moving = True
+
+    def terminate(self):
+        pygame.quit()
+        sys.exit()
+
+    def mainLoop(self):
+        while True:
+            self.displaySurf.fill(background)
+            self.updateScore()
+            self.displaySurf.blit(self.score.render, self.score.rect)
+            self.allSprites.update(self.mousex, self.blocks, self.paddle)
+            self.allSprites.draw(self.displaySurf)
+            pygame.display.update()
+            self.checkInput()
+
+if __name__ == '__main__':
+    runGame = App()
+    runGame.mainLoop()
