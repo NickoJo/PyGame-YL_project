@@ -57,16 +57,74 @@ class Ball(pygame.sprite.Sprite):
         self.vectory = ballspeed * -1
         self.score = 0
 
-    def update(self, *args):
-        pass
+    def update(self, mousex, blocks, paddle, *args):
+        if self.moving == False:
+            self.rect.centerx = mousex
+
+        else:
+            self.rect.y += self.vectory
+
+            hitGroup = pygame.sprite.Group(paddle, blocks)
+
+            spriteHitList = pygame.sprite.spritecollide(self, hitGroup, False)
+            if len(spriteHitList) > 0:
+                for sprite in spriteHitList:
+                    if sprite.name == block:
+                        sprite.kill()
+                        self.score += 1
+                self.vectory *= -1
+                self.rect.y += self.vectory
+
+            self.rect.x += self.vectorx
+
+            blockHitList = pygame.sprite.spritecollide(self, blocks, True)
+
+            if len(blockHitList) > 0:
+                self.vectorx *= -1
+                self.score += 1
+
+            if self.rect.right > width:
+                self.vectorx *= -1
+                self.rect.right = width
+
+            elif self.rect.left < 0:
+                self.vectorx *= -1
+                self.rect.left = 0
+
+            if self.rect.top < 0:
+                self.vectory *= -1
+                self.rect.top = 0
 
 
 class Paddle(pygame.sprite.Sprite):
-    pass
+
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((paddlewidth, paddleheight))
+        self.image.fill(white)
+        self.rect = self.image.get_rect()
+        self.name = paddle
+
+    def update(self, mousex, *args):
+        if self.rect.x >= 0 and self.rect.right <= width:
+            self.rect.centerx = mousex
+
+        if self.rect.x < 0:
+            self.rect.x = 0
+
+        elif self.rect.right > width:
+            self.rect.right = width
+
 
 
 class Score(object):
-    pass
+    def __init__(self):
+        self.score = 0
+        self.font = pygame.font.SysFont('Helvetica', 25)
+        self.render = self.font.render('Score: ' + str(self.score), True, white, black)
+        self.rect = self.render.get_rect()
+        self.rect.x = 0
+        self.rect.bottom = height
 
 
 class App(object):
